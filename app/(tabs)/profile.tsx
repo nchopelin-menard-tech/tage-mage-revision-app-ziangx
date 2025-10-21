@@ -1,14 +1,16 @@
 
-import { View, Text, StyleSheet, ScrollView, Platform } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Platform, Pressable } from "react-native";
 import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@react-navigation/native";
 import React from "react";
 import { colors } from "@/styles/commonStyles";
 import { useRevisionStats } from "@/hooks/useRevisionStats";
+import { useRouter } from "expo-router";
 
 export default function ProfileScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { stats, sessions } = useRevisionStats();
 
   const formatTime = (seconds: number) => {
@@ -66,15 +68,35 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
-        contentContainerStyle={[
-          styles.contentContainer,
-          Platform.OS !== 'ios' && styles.contentContainerWithTabBar
-        ]}
+        contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
           <IconSymbol name="person.circle.fill" size={80} color={colors.primary} />
           <Text style={styles.title}>Vos Statistiques</Text>
+        </View>
+
+        <View style={styles.navigationCard}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.navButton,
+              pressed && styles.navButtonPressed
+            ]}
+            onPress={() => router.push('/(tabs)/(home)')}
+          >
+            <IconSymbol name="house.fill" size={20} color={colors.primary} />
+            <Text style={styles.navButtonText}>Accueil</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.navButton,
+              pressed && styles.navButtonPressed
+            ]}
+            onPress={() => router.push('/(tabs)/admission')}
+          >
+            <IconSymbol name="graduationcap.fill" size={20} color={colors.gold} />
+            <Text style={styles.navButtonText}>Admission</Text>
+          </Pressable>
         </View>
 
         <View style={styles.statsCard}>
@@ -242,10 +264,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
-    paddingBottom: 20,
-  },
-  contentContainerWithTabBar: {
-    paddingBottom: 100,
+    paddingBottom: 40,
   },
   header: {
     alignItems: 'center',
@@ -256,6 +275,33 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
     marginTop: 12,
+  },
+  navigationCard: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  navButton: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  navButtonPressed: {
+    opacity: 0.7,
+  },
+  navButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
   },
   statsCard: {
     backgroundColor: colors.card,

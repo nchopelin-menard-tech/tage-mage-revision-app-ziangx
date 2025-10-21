@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
 import { useRevisionStats } from '@/hooks/useRevisionStats';
+import { useRouter } from 'expo-router';
 
 interface QuestionnaireAnswer {
   question: string;
@@ -21,6 +22,7 @@ interface SchoolPrediction {
 }
 
 export default function AdmissionScreen() {
+  const router = useRouter();
   const { stats } = useRevisionStats();
   const [currentStep, setCurrentStep] = useState<'intro' | 'questionnaire' | 'results'>('intro');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -232,10 +234,7 @@ export default function AdmissionScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <ScrollView
-          contentContainerStyle={[
-            styles.contentContainer,
-            Platform.OS !== 'ios' && styles.contentContainerWithTabBar
-          ]}
+          contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.introHeader}>
@@ -246,6 +245,29 @@ export default function AdmissionScreen() {
             <Text style={styles.introSubtitle}>
               Estimez vos chances d&apos;intégrer les grandes écoles de commerce
             </Text>
+          </View>
+
+          <View style={styles.navigationCard}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.navButton,
+                pressed && styles.navButtonPressed
+              ]}
+              onPress={() => router.push('/(tabs)/(home)')}
+            >
+              <IconSymbol name="house.fill" size={20} color={colors.primary} />
+              <Text style={styles.navButtonText}>Accueil</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.navButton,
+                pressed && styles.navButtonPressed
+              ]}
+              onPress={() => router.push('/(tabs)/profile')}
+            >
+              <IconSymbol name="person.fill" size={20} color={colors.accent} />
+              <Text style={styles.navButtonText}>Profil</Text>
+            </Pressable>
           </View>
 
           <View style={styles.infoCard}>
@@ -337,10 +359,7 @@ export default function AdmissionScreen() {
           </View>
 
           <ScrollView
-            contentContainerStyle={[
-              styles.questionContent,
-              Platform.OS !== 'ios' && styles.questionContentWithTabBar
-            ]}
+            contentContainerStyle={styles.questionContent}
             showsVerticalScrollIndicator={false}
           >
             <Text style={styles.questionCounter}>
@@ -376,7 +395,7 @@ export default function AdmissionScreen() {
           <View style={styles.navigationButtons}>
             <Pressable
               style={({ pressed }) => [
-                styles.navButton,
+                styles.navButtonBottom,
                 styles.previousButton,
                 currentQuestionIndex === 0 && styles.navButtonDisabled,
                 pressed && currentQuestionIndex > 0 && styles.navButtonPressed,
@@ -385,12 +404,12 @@ export default function AdmissionScreen() {
               disabled={currentQuestionIndex === 0}
             >
               <IconSymbol name="chevron.left" size={20} color="#ffffff" />
-              <Text style={styles.navButtonText}>Précédent</Text>
+              <Text style={styles.navButtonBottomText}>Précédent</Text>
             </Pressable>
 
             <Pressable
               style={({ pressed }) => [
-                styles.navButton,
+                styles.navButtonBottom,
                 styles.nextButton,
                 currentAnswer === undefined && styles.navButtonDisabled,
                 pressed && styles.navButtonPressed,
@@ -398,7 +417,7 @@ export default function AdmissionScreen() {
               onPress={handleNext}
               disabled={currentAnswer === undefined}
             >
-              <Text style={styles.navButtonText}>
+              <Text style={styles.navButtonBottomText}>
                 {currentQuestionIndex === questionnaire.length - 1 ? 'Voir Résultats' : 'Suivant'}
               </Text>
               <IconSymbol name="chevron.right" size={20} color="#ffffff" />
@@ -413,10 +432,7 @@ export default function AdmissionScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
-        contentContainerStyle={[
-          styles.contentContainer,
-          Platform.OS !== 'ios' && styles.contentContainerWithTabBar
-        ]}
+        contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.resultsHeader}>
@@ -552,10 +568,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
-    paddingBottom: 20,
-  },
-  contentContainerWithTabBar: {
-    paddingBottom: 100,
+    paddingBottom: 40,
   },
   introHeader: {
     alignItems: 'center',
@@ -584,6 +597,33 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 20,
+  },
+  navigationCard: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  navButton: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  navButtonPressed: {
+    opacity: 0.7,
+  },
+  navButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
   },
   infoCard: {
     backgroundColor: colors.card,
@@ -714,9 +754,7 @@ const styles = StyleSheet.create({
   },
   questionContent: {
     padding: 20,
-  },
-  questionContentWithTabBar: {
-    paddingBottom: 180,
+    paddingBottom: 120,
   },
   questionCounter: {
     fontSize: 14,
@@ -790,7 +828,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.card,
   },
-  navButton: {
+  navButtonBottom: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -810,10 +848,7 @@ const styles = StyleSheet.create({
   navButtonDisabled: {
     opacity: 0.4,
   },
-  navButtonPressed: {
-    opacity: 0.8,
-  },
-  navButtonText: {
+  navButtonBottomText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
