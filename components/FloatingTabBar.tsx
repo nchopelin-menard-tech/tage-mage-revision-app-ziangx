@@ -3,7 +3,7 @@ import { useTheme } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { IconSymbol } from '@/components/IconSymbol';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -48,7 +48,7 @@ export default function FloatingTabBar({
   const activeIndex = tabs.findIndex((tab) => pathname.includes(tab.name));
   const indicatorPosition = useSharedValue(activeIndex >= 0 ? activeIndex : 0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const newIndex = tabs.findIndex((tab) => pathname.includes(tab.name));
     if (newIndex >= 0) {
       indicatorPosition.value = withSpring(newIndex, {
