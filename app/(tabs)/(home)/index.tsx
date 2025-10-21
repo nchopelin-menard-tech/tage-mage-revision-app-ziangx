@@ -80,8 +80,82 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          <View style={styles.examSection}>
+            <Text style={styles.sectionTitle}>Modes de Révision</Text>
+            
+            <Pressable
+              style={({ pressed }) => [
+                styles.examCard,
+                styles.examCardPrimary,
+                pressed && styles.examCardPressed
+              ]}
+              onPress={() => router.push('/revision/mixed?mode=exam&count=40')}
+            >
+              <View style={styles.examCardContent}>
+                <View style={[styles.examIcon, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+                  <IconSymbol name="doc.text.fill" size={32} color="#ffffff" />
+                </View>
+                <View style={styles.examTextContent}>
+                  <Text style={styles.examCardTitle}>Examen Blanc</Text>
+                  <Text style={styles.examCardDescription}>
+                    40 questions mixtes - Simulation complète
+                  </Text>
+                  <View style={styles.examStats}>
+                    <Text style={styles.examStatsText}>
+                      {stats.examStats.sessions} sessions
+                    </Text>
+                    {stats.examStats.sessions > 0 && (
+                      <>
+                        <Text style={styles.examStatsText}>•</Text>
+                        <Text style={styles.examStatsText}>
+                          Meilleur: {stats.examStats.bestScore.toFixed(0)}%
+                        </Text>
+                      </>
+                    )}
+                  </View>
+                </View>
+                <IconSymbol name="chevron.right" size={24} color="#ffffff" />
+              </View>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.examCard,
+                styles.examCardSecondary,
+                pressed && styles.examCardPressed
+              ]}
+              onPress={() => router.push('/revision/mixed?mode=training&count=20')}
+            >
+              <View style={styles.examCardContent}>
+                <View style={[styles.examIcon, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+                  <IconSymbol name="figure.run" size={32} color="#ffffff" />
+                </View>
+                <View style={styles.examTextContent}>
+                  <Text style={styles.examCardTitle}>Session d&apos;Entraînement</Text>
+                  <Text style={styles.examCardDescription}>
+                    20 questions mixtes - Pratique rapide
+                  </Text>
+                  <View style={styles.examStats}>
+                    <Text style={styles.examStatsText}>
+                      {stats.trainingStats.sessions} sessions
+                    </Text>
+                    {stats.trainingStats.sessions > 0 && (
+                      <>
+                        <Text style={styles.examStatsText}>•</Text>
+                        <Text style={styles.examStatsText}>
+                          Meilleur: {stats.trainingStats.bestScore.toFixed(0)}%
+                        </Text>
+                      </>
+                    )}
+                  </View>
+                </View>
+                <IconSymbol name="chevron.right" size={24} color="#ffffff" />
+              </View>
+            </Pressable>
+          </View>
+
           <View style={styles.sectionsContainer}>
-            <Text style={styles.sectionTitle}>Choisissez une Section</Text>
+            <Text style={styles.sectionTitle}>Révision par Section</Text>
             {sections.map((section) => (
               <Pressable
                 key={section.id}
@@ -100,10 +174,14 @@ export default function HomeScreen() {
                     <Text style={styles.sectionStatsText}>
                       {stats.sectionStats[section.id as keyof typeof stats.sectionStats].sessions} sessions
                     </Text>
-                    <Text style={styles.sectionStatsText}>•</Text>
-                    <Text style={styles.sectionStatsText}>
-                      Meilleur: {stats.sectionStats[section.id as keyof typeof stats.sectionStats].bestScore.toFixed(0)}%
-                    </Text>
+                    {stats.sectionStats[section.id as keyof typeof stats.sectionStats].sessions > 0 && (
+                      <>
+                        <Text style={styles.sectionStatsText}>•</Text>
+                        <Text style={styles.sectionStatsText}>
+                          Meilleur: {stats.sectionStats[section.id as keyof typeof stats.sectionStats].bestScore.toFixed(0)}%
+                        </Text>
+                      </>
+                    )}
                   </View>
                 </View>
                 <IconSymbol name="chevron.right" size={20} color={colors.textSecondary} />
@@ -196,7 +274,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
   },
-  sectionsContainer: {
+  examSection: {
     marginBottom: 24,
   },
   sectionTitle: {
@@ -204,6 +282,60 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
     marginBottom: 16,
+  },
+  examCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 12,
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
+    elevation: 5,
+  },
+  examCardPrimary: {
+    backgroundColor: colors.primary,
+  },
+  examCardSecondary: {
+    backgroundColor: colors.accent,
+  },
+  examCardPressed: {
+    opacity: 0.8,
+  },
+  examCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  examIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  examTextContent: {
+    flex: 1,
+  },
+  examCardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  examCardDescription: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 8,
+  },
+  examStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  examStatsText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  sectionsContainer: {
+    marginBottom: 24,
   },
   sectionCard: {
     backgroundColor: colors.card,

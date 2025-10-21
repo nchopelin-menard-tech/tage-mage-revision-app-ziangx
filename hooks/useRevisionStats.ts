@@ -18,6 +18,8 @@ export const useRevisionStats = () => {
       raisonnement: { sessions: 0, bestScore: 0, averageScore: 0 },
       logique: { sessions: 0, bestScore: 0, averageScore: 0 },
     },
+    examStats: { sessions: 0, bestScore: 0, averageScore: 0 },
+    trainingStats: { sessions: 0, bestScore: 0, averageScore: 0 },
   });
   const [loading, setLoading] = useState(true);
 
@@ -78,12 +80,17 @@ export const useRevisionStats = () => {
       logique: calculateSectionStats('logique'),
     };
 
+    const examStats = calculateModeStats('exam');
+    const trainingStats = calculateModeStats('training');
+
     setStats({
       totalSessions,
       bestScore,
       averageScore,
       totalTimeSpent,
       sectionStats,
+      examStats,
+      trainingStats,
     });
   };
 
@@ -99,6 +106,23 @@ export const useRevisionStats = () => {
 
     return {
       sessions: sectionSessions.length,
+      bestScore,
+      averageScore,
+    };
+  };
+
+  const calculateModeStats = (mode: 'exam' | 'training') => {
+    const modeSessions = sessions.filter(s => s.mode === mode);
+    if (modeSessions.length === 0) {
+      return { sessions: 0, bestScore: 0, averageScore: 0 };
+    }
+
+    const totalScore = modeSessions.reduce((sum, s) => sum + (s.score / s.totalQuestions) * 100, 0);
+    const averageScore = totalScore / modeSessions.length;
+    const bestScore = Math.max(...modeSessions.map(s => (s.score / s.totalQuestions) * 100));
+
+    return {
+      sessions: modeSessions.length,
       bestScore,
       averageScore,
     };

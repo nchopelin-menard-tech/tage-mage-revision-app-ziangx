@@ -14,10 +14,16 @@ export type TageMageSection =
   | 'raisonnement'
   | 'logique';
 
+export type SessionMode = 
+  | 'section' // Practice specific section
+  | 'exam' // Full exam simulation
+  | 'training'; // Training session with mixed questions
+
 export interface RevisionSession {
   id: string;
   date: Date;
-  section: TageMageSection;
+  section: TageMageSection | 'mixed'; // 'mixed' for exam/training modes
+  mode: SessionMode;
   score: number;
   totalQuestions: number;
   timeSpent: number; // in seconds
@@ -36,5 +42,15 @@ export interface Stats {
       bestScore: number;
       averageScore: number;
     };
+  };
+  examStats: {
+    sessions: number;
+    bestScore: number;
+    averageScore: number;
+  };
+  trainingStats: {
+    sessions: number;
+    bestScore: number;
+    averageScore: number;
   };
 }

@@ -1,9 +1,9 @@
 
-import React from "react";
 import { View, Text, StyleSheet, ScrollView, Platform } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/IconSymbol";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@react-navigation/native";
+import React from "react";
 import { colors } from "@/styles/commonStyles";
 import { useRevisionStats } from "@/hooks/useRevisionStats";
 
@@ -28,17 +28,44 @@ export default function ProfileScreen() {
     });
   };
 
-  const sections = [
-    { id: 'comprehension', name: 'Compréhension', icon: 'book.fill', color: colors.primary },
-    { id: 'calcul', name: 'Calcul', icon: 'number', color: colors.secondary },
-    { id: 'raisonnement', name: 'Raisonnement', icon: 'brain.head.profile', color: colors.accent },
-    { id: 'logique', name: 'Logique', icon: 'puzzlepiece.fill', color: colors.highlight },
-  ];
+  const getSectionName = (section: string) => {
+    const names: { [key: string]: string } = {
+      comprehension: 'Compréhension',
+      calcul: 'Calcul',
+      raisonnement: 'Raisonnement',
+      logique: 'Logique',
+      mixed: 'Mixte',
+    };
+    return names[section] || section;
+  };
+
+  const getModeName = (mode: string) => {
+    const names: { [key: string]: string } = {
+      section: 'Section',
+      exam: 'Examen',
+      training: 'Entraînement',
+    };
+    return names[mode] || mode;
+  };
+
+  const getSectionColor = (section: string) => {
+    const sectionColors: { [key: string]: string } = {
+      comprehension: colors.primary,
+      calcul: colors.secondary,
+      raisonnement: colors.accent,
+      logique: colors.highlight,
+      mixed: colors.textSecondary,
+    };
+    return sectionColors[section] || colors.primary;
+  };
+
+  const recentSessions = [...sessions]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 10);
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
-        style={styles.container}
         contentContainerStyle={[
           styles.contentContainer,
           Platform.OS !== 'ios' && styles.contentContainerWithTabBar
@@ -46,124 +73,176 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <View style={styles.profileIcon}>
-            <IconSymbol name="person.fill" size={48} color="#ffffff" />
-          </View>
-          <Text style={styles.headerTitle}>Statistiques Détaillées</Text>
+          <IconSymbol name="person.circle.fill" size={80} color={colors.primary} />
+          <Text style={styles.title}>Vos Statistiques</Text>
         </View>
 
-        <View style={styles.overallStatsCard}>
-          <Text style={styles.cardTitle}>Vue d&apos;Ensemble</Text>
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <IconSymbol name="chart.bar.fill" size={24} color={colors.primary} />
-              <Text style={styles.statBoxValue}>{stats.totalSessions}</Text>
-              <Text style={styles.statBoxLabel}>Sessions Totales</Text>
+        <View style={styles.statsCard}>
+          <Text style={styles.cardTitle}>Statistiques Globales</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{stats.totalSessions}</Text>
+              <Text style={styles.statLabel}>Sessions Totales</Text>
             </View>
-            <View style={styles.statBox}>
-              <IconSymbol name="star.fill" size={24} color={colors.secondary} />
-              <Text style={styles.statBoxValue}>{stats.bestScore.toFixed(0)}%</Text>
-              <Text style={styles.statBoxLabel}>Meilleur Score</Text>
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: colors.secondary }]}>
+                {stats.bestScore.toFixed(0)}%
+              </Text>
+              <Text style={styles.statLabel}>Meilleur Score</Text>
             </View>
-          </View>
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <IconSymbol name="chart.line.uptrend.xyaxis" size={24} color={colors.accent} />
-              <Text style={styles.statBoxValue}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
                 {stats.averageScore > 0 ? stats.averageScore.toFixed(0) : '0'}%
               </Text>
-              <Text style={styles.statBoxLabel}>Score Moyen</Text>
+              <Text style={styles.statLabel}>Score Moyen</Text>
             </View>
-            <View style={styles.statBox}>
-              <IconSymbol name="clock.fill" size={24} color={colors.highlight} />
-              <Text style={styles.statBoxValue}>{formatTime(stats.totalTimeSpent)}</Text>
-              <Text style={styles.statBoxLabel}>Temps Total</Text>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{formatTime(stats.totalTimeSpent)}</Text>
+              <Text style={styles.statLabel}>Temps Total</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.modeStatsSection}>
+          <Text style={styles.sectionTitle}>Statistiques par Mode</Text>
+          
+          <View style={styles.modeCard}>
+            <View style={styles.modeHeader}>
+              <IconSymbol name="doc.text.fill" size={24} color={colors.primary} />
+              <Text style={styles.modeTitle}>Examens Blancs</Text>
+            </View>
+            <View style={styles.modeStats}>
+              <View style={styles.modeStatItem}>
+                <Text style={styles.modeStatValue}>{stats.examStats.sessions}</Text>
+                <Text style={styles.modeStatLabel}>Sessions</Text>
+              </View>
+              <View style={styles.modeStatItem}>
+                <Text style={[styles.modeStatValue, { color: colors.secondary }]}>
+                  {stats.examStats.bestScore.toFixed(0)}%
+                </Text>
+                <Text style={styles.modeStatLabel}>Meilleur</Text>
+              </View>
+              <View style={styles.modeStatItem}>
+                <Text style={styles.modeStatValue}>
+                  {stats.examStats.averageScore > 0 ? stats.examStats.averageScore.toFixed(0) : '0'}%
+                </Text>
+                <Text style={styles.modeStatLabel}>Moyenne</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.modeCard}>
+            <View style={styles.modeHeader}>
+              <IconSymbol name="figure.run" size={24} color={colors.accent} />
+              <Text style={styles.modeTitle}>Entraînements</Text>
+            </View>
+            <View style={styles.modeStats}>
+              <View style={styles.modeStatItem}>
+                <Text style={styles.modeStatValue}>{stats.trainingStats.sessions}</Text>
+                <Text style={styles.modeStatLabel}>Sessions</Text>
+              </View>
+              <View style={styles.modeStatItem}>
+                <Text style={[styles.modeStatValue, { color: colors.secondary }]}>
+                  {stats.trainingStats.bestScore.toFixed(0)}%
+                </Text>
+                <Text style={styles.modeStatLabel}>Meilleur</Text>
+              </View>
+              <View style={styles.modeStatItem}>
+                <Text style={styles.modeStatValue}>
+                  {stats.trainingStats.averageScore > 0 ? stats.trainingStats.averageScore.toFixed(0) : '0'}%
+                </Text>
+                <Text style={styles.modeStatLabel}>Moyenne</Text>
+              </View>
             </View>
           </View>
         </View>
 
         <View style={styles.sectionStatsContainer}>
           <Text style={styles.sectionTitle}>Statistiques par Section</Text>
-          {sections.map((section) => {
-            const sectionStats = stats.sectionStats[section.id as keyof typeof stats.sectionStats];
-            return (
-              <View key={section.id} style={styles.sectionStatCard}>
-                <View style={[styles.sectionStatIcon, { backgroundColor: section.color }]}>
-                  <IconSymbol name={section.icon as any} size={24} color="#ffffff" />
+          {Object.entries(stats.sectionStats).map(([section, data]) => (
+            <View key={section} style={styles.sectionStatCard}>
+              <View style={styles.sectionStatHeader}>
+                <View style={[styles.sectionDot, { backgroundColor: getSectionColor(section) }]} />
+                <Text style={styles.sectionStatName}>{getSectionName(section)}</Text>
+              </View>
+              <View style={styles.sectionStatContent}>
+                <View style={styles.sectionStatItem}>
+                  <Text style={styles.sectionStatValue}>{data.sessions}</Text>
+                  <Text style={styles.sectionStatLabel}>Sessions</Text>
                 </View>
-                <View style={styles.sectionStatContent}>
-                  <Text style={styles.sectionStatName}>{section.name}</Text>
-                  <View style={styles.sectionStatDetails}>
-                    <Text style={styles.sectionStatText}>
-                      {sectionStats.sessions} sessions
-                    </Text>
-                    <Text style={styles.sectionStatSeparator}>•</Text>
-                    <Text style={styles.sectionStatText}>
-                      Meilleur: {sectionStats.bestScore.toFixed(0)}%
-                    </Text>
-                    <Text style={styles.sectionStatSeparator}>•</Text>
-                    <Text style={styles.sectionStatText}>
-                      Moyenne: {sectionStats.averageScore > 0 ? sectionStats.averageScore.toFixed(0) : '0'}%
-                    </Text>
-                  </View>
+                <View style={styles.sectionStatItem}>
+                  <Text style={[styles.sectionStatValue, { color: colors.secondary }]}>
+                    {data.bestScore.toFixed(0)}%
+                  </Text>
+                  <Text style={styles.sectionStatLabel}>Meilleur</Text>
+                </View>
+                <View style={styles.sectionStatItem}>
+                  <Text style={styles.sectionStatValue}>
+                    {data.averageScore > 0 ? data.averageScore.toFixed(0) : '0'}%
+                  </Text>
+                  <Text style={styles.sectionStatLabel}>Moyenne</Text>
                 </View>
               </View>
-            );
-          })}
+            </View>
+          ))}
         </View>
 
-        {sessions.length > 0 && (
-          <View style={styles.recentSessionsContainer}>
-            <Text style={styles.sectionTitle}>Sessions Récentes</Text>
-            {sessions.slice(-5).reverse().map((session) => {
+        <View style={styles.historyContainer}>
+          <Text style={styles.sectionTitle}>Historique Récent</Text>
+          {recentSessions.length === 0 ? (
+            <View style={styles.emptyState}>
+              <IconSymbol name="clock" size={48} color={colors.textSecondary} />
+              <Text style={styles.emptyStateText}>Aucune session pour le moment</Text>
+            </View>
+          ) : (
+            recentSessions.map((session) => {
               const percentage = (session.score / session.totalQuestions) * 100;
-              const sectionInfo = sections.find(s => s.id === session.section);
               return (
-                <View key={session.id} style={styles.sessionCard}>
-                  <View style={[styles.sessionIcon, { backgroundColor: sectionInfo?.color || colors.primary }]}>
-                    <IconSymbol name={sectionInfo?.icon as any || 'book.fill'} size={20} color="#ffffff" />
+                <View key={session.id} style={styles.historyCard}>
+                  <View style={styles.historyHeader}>
+                    <View style={styles.historyHeaderLeft}>
+                      <View style={[styles.sectionDot, { backgroundColor: getSectionColor(session.section) }]} />
+                      <View>
+                        <Text style={styles.historySection}>{getSectionName(session.section)}</Text>
+                        <Text style={styles.historyMode}>{getModeName(session.mode)}</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.historyDate}>{formatDate(session.date)}</Text>
                   </View>
-                  <View style={styles.sessionContent}>
-                    <Text style={styles.sessionName}>{sectionInfo?.name || session.section}</Text>
-                    <Text style={styles.sessionDate}>{formatDate(session.date)}</Text>
-                  </View>
-                  <View style={styles.sessionScore}>
-                    <Text style={[styles.sessionScoreText, { color: percentage >= 60 ? colors.accent : colors.secondary }]}>
-                      {percentage.toFixed(0)}%
-                    </Text>
-                    <Text style={styles.sessionScoreLabel}>
-                      {session.score}/{session.totalQuestions}
-                    </Text>
+                  <View style={styles.historyStats}>
+                    <View style={styles.historyStatItem}>
+                      <Text style={[
+                        styles.historyScore,
+                        { color: percentage >= 60 ? colors.accent : colors.secondary }
+                      ]}>
+                        {percentage.toFixed(0)}%
+                      </Text>
+                      <Text style={styles.historyStatLabel}>
+                        {session.score}/{session.totalQuestions} bonnes réponses
+                      </Text>
+                    </View>
+                    <View style={styles.historyStatItem}>
+                      <Text style={styles.historyTime}>{formatTime(session.timeSpent)}</Text>
+                      <Text style={styles.historyStatLabel}>Temps passé</Text>
+                    </View>
                   </View>
                 </View>
               );
-            })}
-          </View>
-        )}
-
-        {sessions.length === 0 && (
-          <View style={styles.emptyState}>
-            <IconSymbol name="tray.fill" size={64} color={colors.textSecondary} />
-            <Text style={styles.emptyStateText}>Aucune session pour le moment</Text>
-            <Text style={styles.emptyStateSubtext}>
-              Commencez une révision pour voir vos statistiques ici
-            </Text>
-          </View>
-        )}
+            })
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   container: {
     flex: 1,
   },
   contentContainer: {
     padding: 20,
+    paddingBottom: 20,
   },
   contentContainerWithTabBar: {
     paddingBottom: 100,
@@ -172,21 +251,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
-  profileIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  headerTitle: {
-    fontSize: 24,
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
+    marginTop: 12,
   },
-  overallStatsCard: {
+  statsCard: {
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: 20,
@@ -200,32 +271,28 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 16,
   },
-  statsRow: {
+  statsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
+  },
+  statItem: {
+    width: '48%',
+    alignItems: 'center',
     marginBottom: 16,
   },
-  statBox: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: colors.background,
-    borderRadius: 12,
-    marginHorizontal: 4,
-  },
-  statBoxValue: {
-    fontSize: 24,
+  statValue: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: colors.text,
-    marginTop: 8,
+    color: colors.primary,
     marginBottom: 4,
   },
-  statBoxLabel: {
-    fontSize: 12,
+  statLabel: {
+    fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
   },
-  sectionStatsContainer: {
+  modeStatsSection: {
     marginBottom: 24,
   },
   sectionTitle: {
@@ -234,107 +301,151 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 16,
   },
+  modeCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
+  },
+  modeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  modeTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  modeStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  modeStatItem: {
+    alignItems: 'center',
+  },
+  modeStatValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  modeStatLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  sectionStatsContainer: {
+    marginBottom: 24,
+  },
   sectionStatCard: {
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
+  },
+  sectionStatHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
-    elevation: 2,
+    gap: 12,
+    marginBottom: 12,
   },
-  sectionStatIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  sectionStatContent: {
-    flex: 1,
+  sectionDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   sectionStatName: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
+  },
+  sectionStatContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  sectionStatItem: {
+    alignItems: 'center',
+  },
+  sectionStatValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.primary,
     marginBottom: 4,
   },
-  sectionStatDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  sectionStatText: {
-    fontSize: 13,
+  sectionStatLabel: {
+    fontSize: 12,
     color: colors.textSecondary,
   },
-  sectionStatSeparator: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginHorizontal: 6,
-  },
-  recentSessionsContainer: {
+  historyContainer: {
     marginBottom: 24,
   },
-  sessionCard: {
+  emptyState: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginTop: 12,
+  },
+  historyCard: {
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  historyHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
-    elevation: 2,
+    gap: 12,
   },
-  sessionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  sessionContent: {
-    flex: 1,
-  },
-  sessionName: {
+  historySection: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 2,
   },
-  sessionDate: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  sessionScore: {
-    alignItems: 'flex-end',
-  },
-  sessionScoreText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  sessionScoreLabel: {
+  historyMode: {
     fontSize: 12,
     color: colors.textSecondary,
+    marginTop: 2,
   },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 48,
-  },
-  emptyStateText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyStateSubtext: {
+  historyDate: {
     fontSize: 14,
     color: colors.textSecondary,
-    textAlign: 'center',
+  },
+  historyStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  historyStatItem: {
+    flex: 1,
+  },
+  historyScore: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  historyTime: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  historyStatLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
   },
 });

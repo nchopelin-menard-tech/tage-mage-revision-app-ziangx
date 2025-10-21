@@ -4,12 +4,12 @@ import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-n
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
-import { getSectionQuestions } from '@/data/questions';
-import { Question, TageMageSection, RevisionSession } from '@/types/tageMage';
+import { getMixedQuestions, getBalancedMixedQuestions } from '@/data/questions';
+import { Question, RevisionSession, SessionMode } from '@/types/tageMage';
 import { useRevisionStats } from '@/hooks/useRevisionStats';
 
-export default function RevisionScreen() {
-  const { section } = useLocalSearchParams<{ section: string }>();
+export default function MixedRevisionScreen() {
+  const { mode, count } = useLocalSearchParams<{ mode: string; count: string }>();
   const router = useRouter();
   const { addSession } = useRevisionStats();
   
@@ -20,13 +20,17 @@ export default function RevisionScreen() {
   const [startTime, setStartTime] = useState(Date.now());
 
   useEffect(() => {
-    if (section) {
-      const qs = getSectionQuestions(section as TageMageSection, 10);
+    if (mode && count) {
+      const questionCount = parseInt(count, 10);
+      // Use balanced mix for exams, random mix for training
+      const qs = mode === 'exam' 
+        ? getBalancedMixedQuestions(questionCount)
+        : getMixedQuestions(questionCount);
       setQuestions(qs);
       setSelectedAnswers(new Array(qs.length).fill(-1));
       setStartTime(Date.now());
     }
-  }, [section]);
+  }, [mode, count]);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -60,8 +64,8 @@ export default function RevisionScreen() {
     const session: RevisionSession = {
       id: Date.now().toString(),
       date: new Date(),
-      section: section as TageMageSection,
-      mode: 'section',
+      section: 'mixed',
+      mode: mode as SessionMode,
       score,
       totalQuestions: questions.length,
       timeSpent,
@@ -79,14 +83,28 @@ export default function RevisionScreen() {
     }, 0);
   };
 
-  const getSectionName = () => {
+  const getModeName = () => {
+    return mode === 'exam' ? 'Examen Blanc' : 'Session d\'Entraînement';
+  };
+
+  const getSectionName = (section: string) => {
     const names: { [key: string]: string } = {
       comprehension: 'Compréhension',
       calcul: 'Calcul',
       raisonnement: 'Raisonnement',
       logique: 'Logique',
     };
-    return names[section as string] || section;
+    return names[section] || section;
+  };
+
+  const getSectionColor = (section: string) => {
+    const sectionColors: { [key: string]: string } = {
+      comprehension: colors.primary,
+      calcul: colors.secondary,
+      raisonnement: colors.accent,
+      logique: colors.highlight,
+    };
+    return sectionColors[section] || colors.primary;
   };
 
   if (questions.length === 0) {
@@ -100,6 +118,18 @@ export default function RevisionScreen() {
   if (showResults) {
     const score = calculateScore();
     const percentage = (score / questions.length) * 100;
+
+    // Calculate section breakdown
+    const sectionBreakdown: { [key: string]: { correct: number; total: number } } = {};
+    questions.forEach((q, index) => {
+      if (!sectionBreakdown[q.section]) {
+        sectionBreakdown[q.section] = { correct: 0, total: 0 };
+      }
+      sectionBreakdown[q.section].total++;
+      if (selectedAnswers[index] === q.correctAnswer) {
+        sectionBreakdown[q.section].correct++;
+      }
+    });
 
     return (
       <>
@@ -129,6 +159,33 @@ export default function RevisionScreen() {
               <Text style={styles.resultsSubtitle}>
                 {score} / {questions.length} bonnes réponses
               </Text>
+              <Text style={styles.resultsMode}>{getModeName()}</Text>
+            </View>
+
+            <View style={styles.sectionBreakdown}>
+              <Text style={styles.breakdownTitle}>Performance par Section</Text>
+              {Object.entries(sectionBreakdown).map(([section, data]) => {
+                const sectionPercentage = (data.correct / data.total) * 100;
+                return (
+                  <View key={section} style={styles.breakdownCard}>
+                    <View style={styles.breakdownHeader}>
+                      <View style={[styles.sectionDot, { backgroundColor: getSectionColor(section) }]} />
+                      <Text style={styles.breakdownSectionName}>{getSectionName(section)}</Text>
+                    </View>
+                    <View style={styles.breakdownStats}>
+                      <Text style={styles.breakdownScore}>
+                        {data.correct}/{data.total}
+                      </Text>
+                      <Text style={[
+                        styles.breakdownPercentage,
+                        { color: sectionPercentage >= 60 ? colors.accent : colors.secondary }
+                      ]}>
+                        {sectionPercentage.toFixed(0)}%
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
             </View>
 
             <View style={styles.answersReview}>
@@ -138,7 +195,12 @@ export default function RevisionScreen() {
                 return (
                   <View key={question.id} style={styles.reviewCard}>
                     <View style={styles.reviewHeader}>
-                      <Text style={styles.reviewQuestionNumber}>Question {index + 1}</Text>
+                      <View style={styles.reviewHeaderLeft}>
+                        <Text style={styles.reviewQuestionNumber}>Question {index + 1}</Text>
+                        <View style={[styles.sectionBadge, { backgroundColor: getSectionColor(question.section) }]}>
+                          <Text style={styles.sectionBadgeText}>{getSectionName(question.section)}</Text>
+                        </View>
+                      </View>
                       <View style={[styles.reviewBadge, { backgroundColor: isCorrect ? colors.accent : colors.secondary }]}>
                         <IconSymbol
                           name={isCorrect ? 'checkmark' : 'xmark'}
@@ -169,7 +231,7 @@ export default function RevisionScreen() {
                 styles.finishButton,
                 pressed && styles.finishButtonPressed
               ]}
-              onPress={() => router.back()}
+              onPress={() => router.push('/(tabs)/(home)')}
             >
               <Text style={styles.finishButtonText}>Retour à l&apos;Accueil</Text>
             </Pressable>
@@ -183,7 +245,7 @@ export default function RevisionScreen() {
     <>
       <Stack.Screen
         options={{
-          title: getSectionName(),
+          title: getModeName(),
           headerBackTitle: 'Retour',
         }}
       />
@@ -208,9 +270,14 @@ export default function RevisionScreen() {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.questionNumber}>
-            Question {currentQuestionIndex + 1} / {questions.length}
-          </Text>
+          <View style={styles.questionHeader}>
+            <Text style={styles.questionNumber}>
+              Question {currentQuestionIndex + 1} / {questions.length}
+            </Text>
+            <View style={[styles.sectionBadge, { backgroundColor: getSectionColor(currentQuestion.section) }]}>
+              <Text style={styles.sectionBadgeText}>{getSectionName(currentQuestion.section)}</Text>
+            </View>
+          </View>
           <Text style={styles.questionText}>{currentQuestion.question}</Text>
 
           <View style={styles.optionsContainer}>
@@ -300,10 +367,25 @@ const styles = StyleSheet.create({
   questionContentWithTabBar: {
     paddingBottom: 180,
   },
+  questionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   questionNumber: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 12,
+  },
+  sectionBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  sectionBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#ffffff',
   },
   questionText: {
     fontSize: 20,
@@ -428,6 +510,60 @@ const styles = StyleSheet.create({
   resultsSubtitle: {
     fontSize: 18,
     color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  resultsMode: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+  },
+  sectionBreakdown: {
+    marginBottom: 24,
+  },
+  breakdownTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  breakdownCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
+    elevation: 2,
+  },
+  breakdownHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  sectionDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  breakdownSectionName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  breakdownStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  breakdownScore: {
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  breakdownPercentage: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   answersReview: {
     marginBottom: 24,
@@ -451,6 +587,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  reviewHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
   },
   reviewQuestionNumber: {
     fontSize: 14,
