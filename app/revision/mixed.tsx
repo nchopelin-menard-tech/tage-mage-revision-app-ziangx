@@ -18,7 +18,12 @@ export default function MixedRevisionScreen() {
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [startTime, setStartTime] = useState(Date.now());
+  
+  // Timer state for exam mode
+  const [timeRemaining, setTimeRemaining] = useState<number>(0); // in seconds
+  const [timerExpired, setTimerExpired] = useState(false);
 
+  // Initialize questions and timer
   useEffect(() => {
     if (mode && count) {
       const questionCount = parseInt(count, 10);
@@ -29,10 +34,40 @@ export default function MixedRevisionScreen() {
       setQuestions(qs);
       setSelectedAnswers(new Array(qs.length).fill(-1));
       setStartTime(Date.now());
+      
+      // Set timer for exam mode: 2 hours (7200 seconds) for 40 questions
+      if (mode === 'exam') {
+        setTimeRemaining(7200); // 2 hours
+      }
     }
   }, [mode, count]);
 
+  // Timer countdown for exam mode
+  useEffect(() => {
+    if (mode === 'exam' && timeRemaining > 0 && !showResults) {
+      const timer = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            setTimerExpired(true);
+            finishSession();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [mode, timeRemaining, showResults]);
+
   const currentQuestion = questions[currentQuestionIndex];
+
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleAnswerSelect = (answerIndex: number) => {
     const newAnswers = [...selectedAnswers];
@@ -49,7 +84,8 @@ export default function MixedRevisionScreen() {
   };
 
   const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
+    // Only allow going back in training mode
+    if (mode !== 'exam' && currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
   };
@@ -148,18 +184,21 @@ export default function MixedRevisionScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.resultsHeader}>
-              <View style={[styles.scoreCircle, { borderColor: percentage >= 60 ? colors.accent : colors.secondary }]}>
-                <Text style={[styles.scorePercentage, { color: percentage >= 60 ? colors.accent : colors.secondary }]}>
+              <View style={[styles.scoreCircle, { borderColor: percentage >= 60 ? colors.accent : colors.error }]}>
+                <Text style={[styles.scorePercentage, { color: percentage >= 60 ? colors.accent : colors.error }]}>
                   {percentage.toFixed(0)}%
                 </Text>
               </View>
               <Text style={styles.resultsTitle}>
-                {percentage >= 80 ? 'Excellent!' : percentage >= 60 ? 'Bien joué!' : 'Continuez à pratiquer!'}
+                {percentage >= 80 ? 'Excellence!' : percentage >= 60 ? 'Très Bien!' : 'Continuez vos Efforts!'}
               </Text>
               <Text style={styles.resultsSubtitle}>
                 {score} / {questions.length} bonnes réponses
               </Text>
               <Text style={styles.resultsMode}>{getModeName()}</Text>
+              {timerExpired && (
+                <Text style={styles.timerExpiredText}>⏱️ Temps écoulé</Text>
+              )}
             </View>
 
             <View style={styles.sectionBreakdown}>
@@ -178,7 +217,7 @@ export default function MixedRevisionScreen() {
                       </Text>
                       <Text style={[
                         styles.breakdownPercentage,
-                        { color: sectionPercentage >= 60 ? colors.accent : colors.secondary }
+                        { color: sectionPercentage >= 60 ? colors.accent : colors.error }
                       ]}>
                         {sectionPercentage.toFixed(0)}%
                       </Text>
@@ -201,7 +240,7 @@ export default function MixedRevisionScreen() {
                           <Text style={styles.sectionBadgeText}>{getSectionName(question.section)}</Text>
                         </View>
                       </View>
-                      <View style={[styles.reviewBadge, { backgroundColor: isCorrect ? colors.accent : colors.secondary }]}>
+                      <View style={[styles.reviewBadge, { backgroundColor: isCorrect ? colors.accent : colors.error }]}>
                         <IconSymbol
                           name={isCorrect ? 'checkmark' : 'xmark'}
                           size={16}
@@ -241,6 +280,9 @@ export default function MixedRevisionScreen() {
     );
   }
 
+  const isExamMode = mode === 'exam';
+  const canGoBack = !isExamMode && currentQuestionIndex > 0;
+
   return (
     <>
       <Stack.Screen
@@ -250,6 +292,16 @@ export default function MixedRevisionScreen() {
         }}
       />
       <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Timer for exam mode */}
+        {isExamMode && (
+          <View style={[styles.timerContainer, timeRemaining < 600 && styles.timerWarning]}>
+            <IconSymbol name="clock.fill" size={20} color={timeRemaining < 600 ? colors.error : colors.primary} />
+            <Text style={[styles.timerText, timeRemaining < 600 && styles.timerTextWarning]}>
+              {formatTime(timeRemaining)}
+            </Text>
+          </View>
+        )}
+
         <View style={styles.progressBar}>
           <View
             style={[
@@ -306,24 +358,27 @@ export default function MixedRevisionScreen() {
         </ScrollView>
 
         <View style={styles.navigationButtons}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.navButton,
-              styles.previousButton,
-              currentQuestionIndex === 0 && styles.navButtonDisabled,
-              pressed && styles.navButtonPressed,
-            ]}
-            onPress={handlePrevious}
-            disabled={currentQuestionIndex === 0}
-          >
-            <IconSymbol name="chevron.left" size={20} color="#ffffff" />
-            <Text style={styles.navButtonText}>Précédent</Text>
-          </Pressable>
+          {!isExamMode && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.navButton,
+                styles.previousButton,
+                !canGoBack && styles.navButtonDisabled,
+                pressed && canGoBack && styles.navButtonPressed,
+              ]}
+              onPress={handlePrevious}
+              disabled={!canGoBack}
+            >
+              <IconSymbol name="chevron.left" size={20} color="#ffffff" />
+              <Text style={styles.navButtonText}>Précédent</Text>
+            </Pressable>
+          )}
 
           <Pressable
             style={({ pressed }) => [
               styles.navButton,
               styles.nextButton,
+              isExamMode && styles.nextButtonExam,
               selectedAnswers[currentQuestionIndex] === -1 && styles.navButtonDisabled,
               pressed && styles.navButtonPressed,
             ]}
@@ -351,6 +406,36 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 100,
   },
+  timerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: colors.card,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.primary,
+    gap: 8,
+  },
+  timerWarning: {
+    backgroundColor: '#FEF2F2',
+    borderBottomColor: colors.error,
+  },
+  timerText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.primary,
+    fontVariant: ['tabular-nums'],
+  },
+  timerTextWarning: {
+    color: colors.error,
+  },
+  timerExpiredText: {
+    fontSize: 14,
+    color: colors.error,
+    fontWeight: '600',
+    marginTop: 4,
+  },
   progressBar: {
     height: 4,
     backgroundColor: colors.card,
@@ -376,6 +461,7 @@ const styles = StyleSheet.create({
   questionNumber: {
     fontSize: 14,
     color: colors.textSecondary,
+    fontWeight: '600',
   },
   sectionBadge: {
     paddingHorizontal: 12,
@@ -411,6 +497,8 @@ const styles = StyleSheet.create({
   optionButtonSelected: {
     borderColor: colors.primary,
     backgroundColor: colors.card,
+    boxShadow: '0px 4px 8px rgba(30, 58, 138, 0.15)',
+    elevation: 4,
   },
   optionButtonPressed: {
     opacity: 0.7,
@@ -441,6 +529,7 @@ const styles = StyleSheet.create({
   },
   optionTextSelected: {
     fontWeight: '600',
+    color: colors.primary,
   },
   navigationButtons: {
     flexDirection: 'row',
@@ -466,6 +555,9 @@ const styles = StyleSheet.create({
   },
   nextButton: {
     backgroundColor: colors.primary,
+  },
+  nextButtonExam: {
+    flex: 1,
   },
   navButtonDisabled: {
     opacity: 0.4,

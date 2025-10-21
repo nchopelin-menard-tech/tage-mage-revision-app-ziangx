@@ -49,26 +49,32 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <Text style={styles.welcomeText}>Bienvenue sur</Text>
-            <Text style={styles.title}>Tage Mage Révision</Text>
-            <Text style={styles.subtitle}>Préparez-vous pour réussir!</Text>
+            <View style={styles.logoContainer}>
+              <IconSymbol name="graduationcap.fill" size={40} color={colors.primary} />
+            </View>
+            <Text style={styles.welcomeText}>Excellence & Réussite</Text>
+            <Text style={styles.title}>Tage Mage</Text>
+            <Text style={styles.subtitle}>Votre Passeport pour les Grandes Écoles</Text>
           </View>
 
           <View style={styles.statsCard}>
-            <Text style={styles.cardTitle}>Vos Statistiques</Text>
+            <View style={styles.statsHeader}>
+              <IconSymbol name="chart.bar.fill" size={24} color={colors.primary} />
+              <Text style={styles.cardTitle}>Vos Performances</Text>
+            </View>
             <View style={styles.statsGrid}>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>{stats.totalSessions}</Text>
                 <Text style={styles.statLabel}>Sessions</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.secondary }]}>
+                <Text style={[styles.statValue, { color: colors.gold }]}>
                   {stats.bestScore.toFixed(0)}%
                 </Text>
                 <Text style={styles.statLabel}>Meilleur Score</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>
+                <Text style={[styles.statValue, { color: colors.accent }]}>
                   {stats.averageScore > 0 ? stats.averageScore.toFixed(0) : '0'}%
                 </Text>
                 <Text style={styles.statLabel}>Moyenne</Text>
@@ -98,7 +104,7 @@ export default function HomeScreen() {
                 <View style={styles.examTextContent}>
                   <Text style={styles.examCardTitle}>Examen Blanc</Text>
                   <Text style={styles.examCardDescription}>
-                    40 questions mixtes - Simulation complète
+                    40 questions • 2 heures • Conditions réelles
                   </Text>
                   <View style={styles.examStats}>
                     <Text style={styles.examStatsText}>
@@ -133,7 +139,7 @@ export default function HomeScreen() {
                 <View style={styles.examTextContent}>
                   <Text style={styles.examCardTitle}>Session d&apos;Entraînement</Text>
                   <Text style={styles.examCardDescription}>
-                    20 questions mixtes - Pratique rapide
+                    20 questions • Pratique flexible
                   </Text>
                   <View style={styles.examStats}>
                     <Text style={styles.examStatsText}>
@@ -166,7 +172,7 @@ export default function HomeScreen() {
                 onPress={() => router.push(`/revision/${section.id}`)}
               >
                 <View style={[styles.sectionIcon, { backgroundColor: section.color }]}>
-                  <IconSymbol name={section.icon as any} size={32} color="#ffffff" />
+                  <IconSymbol name={section.icon as any} size={28} color="#ffffff" />
                 </View>
                 <View style={styles.sectionContent}>
                   <Text style={styles.sectionName}>{section.name}</Text>
@@ -189,16 +195,24 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.allStatsButton,
-              pressed && styles.allStatsButtonPressed
-            ]}
-            onPress={() => router.push('/(tabs)/profile')}
-          >
-            <IconSymbol name="chart.bar.fill" size={20} color="#ffffff" />
-            <Text style={styles.allStatsButtonText}>Voir Toutes les Statistiques</Text>
-          </Pressable>
+          <View style={styles.ctaContainer}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.ctaButton,
+                pressed && styles.ctaButtonPressed
+              ]}
+              onPress={() => router.push('/(tabs)/admission')}
+            >
+              <View style={styles.ctaContent}>
+                <IconSymbol name="graduationcap.fill" size={24} color={colors.gold} />
+                <View style={styles.ctaTextContainer}>
+                  <Text style={styles.ctaTitle}>Prédiction d&apos;Admission</Text>
+                  <Text style={styles.ctaSubtitle}>Estimez vos chances d&apos;intégrer les grandes écoles</Text>
+                </View>
+                <IconSymbol name="arrow.right" size={20} color={colors.gold} />
+              </View>
+            </Pressable>
+          </View>
         </ScrollView>
       </View>
     </>
@@ -224,35 +238,57 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     alignItems: 'center',
   },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+    elevation: 4,
+  },
   welcomeText: {
-    fontSize: 16,
-    color: colors.textSecondary,
+    fontSize: 14,
+    color: colors.secondary,
     marginBottom: 4,
+    fontWeight: '600',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   title: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
-    color: colors.text,
+    color: colors.primary,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textSecondary,
+    textAlign: 'center',
   },
   statsCard: {
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
-    elevation: 3,
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.08)',
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(30, 58, 138, 0.1)',
+  },
+  statsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 16,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -271,8 +307,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textSecondary,
+    fontWeight: '500',
   },
   examSection: {
     marginBottom: 24,
@@ -315,13 +352,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   examCardTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#ffffff',
     marginBottom: 4,
   },
   examCardDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: 'rgba(255, 255, 255, 0.9)',
     marginBottom: 8,
   },
@@ -344,16 +381,18 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
     elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   sectionCardPressed: {
     opacity: 0.7,
   },
   sectionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -362,7 +401,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionName: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
     color: colors.text,
     marginBottom: 4,
@@ -373,26 +412,40 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionStatsText: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textSecondary,
   },
-  allStatsButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
-    elevation: 3,
+  ctaContainer: {
+    marginBottom: 20,
   },
-  allStatsButtonPressed: {
+  ctaButton: {
+    backgroundColor: colors.darkBlue,
+    borderRadius: 16,
+    padding: 20,
+    boxShadow: '0px 4px 16px rgba(15, 23, 42, 0.2)',
+    elevation: 6,
+    borderWidth: 2,
+    borderColor: colors.gold,
+  },
+  ctaButtonPressed: {
     opacity: 0.8,
   },
-  allStatsButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+  ctaContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  ctaTextContainer: {
+    flex: 1,
+  },
+  ctaTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#ffffff',
+    marginBottom: 4,
+  },
+  ctaSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
 });

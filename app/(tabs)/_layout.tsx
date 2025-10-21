@@ -1,54 +1,63 @@
 
+import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
-import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
-import { Stack } from 'expo-router';
-import FloatingTabBar, { TabBarItem } from '@/components/FloatingTabBar';
+import FloatingTabBar from '@/components/FloatingTabBar';
 import { colors } from '@/styles/commonStyles';
 
 export default function TabLayout() {
-  const tabs: TabBarItem[] = [
+  const tabs = [
     {
       name: '(home)',
-      route: '/(tabs)/(home)/',
+      title: 'Accueil',
       icon: 'house.fill',
-      label: 'Accueil',
+      route: '/(tabs)/(home)',
+    },
+    {
+      name: 'admission',
+      title: 'Admission',
+      icon: 'graduationcap.fill',
+      route: '/(tabs)/admission',
     },
     {
       name: 'profile',
+      title: 'Profil',
+      icon: 'person.fill',
       route: '/(tabs)/profile',
-      icon: 'chart.bar.fill',
-      label: 'Stats',
     },
   ];
 
-  if (Platform.OS === 'ios') {
-    return (
-      <NativeTabs>
-        <NativeTabs.Trigger name="(home)">
-          <Icon sf="house.fill" drawable="ic_home" />
-          <Label>Accueil</Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="profile">
-          <Icon sf="chart.bar.fill" drawable="ic_profile" />
-          <Label>Stats</Label>
-        </NativeTabs.Trigger>
-      </NativeTabs>
-    );
-  }
-
   return (
     <>
-      <Stack
+      <Tabs
         screenOptions={{
           headerShown: false,
-          animation: 'none',
+          tabBarStyle: { display: 'none' },
         }}
+        tabBar={() => Platform.OS === 'ios' ? <FloatingTabBar tabs={tabs} /> : <FloatingTabBar tabs={tabs} />}
       >
-        <Stack.Screen name="(home)" />
-        <Stack.Screen name="profile" />
-      </Stack>
-      <FloatingTabBar tabs={tabs} />
+        <Tabs.Screen
+          name="(home)"
+          options={{
+            title: 'Accueil',
+            headerShown: false,
+          }}
+        />
+        <Tabs.Screen
+          name="admission"
+          options={{
+            title: 'Admission',
+            headerShown: false,
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profil',
+            headerShown: false,
+          }}
+        />
+      </Tabs>
     </>
   );
 }

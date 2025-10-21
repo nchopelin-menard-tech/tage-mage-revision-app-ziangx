@@ -1,15 +1,20 @@
 
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
+// Prestigious color scheme inspired by elite business schools (HEC, EDHEC, ESSEC)
 export const colors = {
-  background: '#f9f9f9',
-  text: '#212121',
-  textSecondary: '#757575',
-  primary: '#3f51b5',
-  secondary: '#e91e63',
-  accent: '#64ffda',
-  card: '#ffffff',
-  highlight: '#ffc107',
+  background: '#F8F9FA',
+  text: '#1A1F36',
+  textSecondary: '#6B7280',
+  primary: '#1E3A8A', // Deep navy blue (HEC inspired)
+  secondary: '#B8860B', // Dark goldenrod (prestige)
+  accent: '#10B981', // Success green
+  card: '#FFFFFF',
+  highlight: '#D97706', // Amber
+  error: '#DC2626',
+  gold: '#C9A961', // Elegant gold
+  darkBlue: '#0F172A', // Very dark blue
+  lightGold: '#F3E5AB', // Light gold for backgrounds
 };
 
 export const buttonStyles = StyleSheet.create({
