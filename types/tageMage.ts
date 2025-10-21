@@ -17,7 +17,8 @@ export type TageMageSection =
 export type SessionMode = 
   | 'section' // Practice specific section
   | 'exam' // Full exam simulation
-  | 'training'; // Training session with mixed questions
+  | 'training' // Training session with mixed questions
+  | 'placement'; // Placement test
 
 export interface RevisionSession {
   id: string;
@@ -53,4 +54,31 @@ export interface Stats {
     bestScore: number;
     averageScore: number;
   };
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  age: number;
+  currentSituation: 'student' | 'professional' | 'other';
+  currentStudies?: string;
+  currentSchool?: string;
+  targetSchool: string;
+  otherInfo?: string;
+  placementTestCompleted: boolean;
+  placementTestScore?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface RevisionResource {
+  id: string;
+  section: TageMageSection;
+  title: string;
+  type: 'fiche' | 'video' | 'article';
+  content?: string;
+  url?: string;
+  description: string;
 }
