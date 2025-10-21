@@ -1,7 +1,8 @@
+
 import "react-native-reanimated";
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
-import { Stack, router } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -14,7 +15,6 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
-import { Button } from "@/components/button";
 import { WidgetProvider } from "@/contexts/WidgetContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -43,8 +43,8 @@ export default function RootLayout() {
       networkState.isInternetReachable === false
     ) {
       Alert.alert(
-        "🔌 You are offline",
-        "You can keep using the app! Your changes will be saved locally and synced when you are back online."
+        "🔌 Vous êtes hors ligne",
+        "Vous pouvez continuer à utiliser l'application ! Vos modifications seront sauvegardées localement."
       );
     }
   }, [networkState.isConnected, networkState.isInternetReachable]);
