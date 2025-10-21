@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -22,6 +22,29 @@ export default function MixedRevisionScreen() {
   // Timer state for exam mode
   const [timeRemaining, setTimeRemaining] = useState<number>(0); // in seconds
   const [timerExpired, setTimerExpired] = useState(false);
+
+  const finishSession = useCallback(async () => {
+    const score = selectedAnswers.reduce((acc, answer, index) => {
+      return acc + (answer === questions[index].correctAnswer ? 1 : 0);
+    }, 0);
+
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+
+    const session: RevisionSession = {
+      id: Date.now().toString(),
+      date: new Date(),
+      section: 'mixed',
+      mode: mode as SessionMode,
+      score,
+      totalQuestions: questions.length,
+      timeSpent,
+      questions,
+      answers: selectedAnswers,
+    };
+
+    await addSession(session);
+    setShowResults(true);
+  }, [selectedAnswers, questions, startTime, mode, addSession]);
 
   // Initialize questions and timer
   useEffect(() => {
@@ -58,7 +81,7 @@ export default function MixedRevisionScreen() {
 
       return () => clearInterval(timer);
     }
-  }, [mode, timeRemaining, showResults]);
+  }, [mode, timeRemaining, showResults, finishSession]);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -88,29 +111,6 @@ export default function MixedRevisionScreen() {
     if (mode !== 'exam' && currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
-  };
-
-  const finishSession = async () => {
-    const score = selectedAnswers.reduce((acc, answer, index) => {
-      return acc + (answer === questions[index].correctAnswer ? 1 : 0);
-    }, 0);
-
-    const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-
-    const session: RevisionSession = {
-      id: Date.now().toString(),
-      date: new Date(),
-      section: 'mixed',
-      mode: mode as SessionMode,
-      score,
-      totalQuestions: questions.length,
-      timeSpent,
-      questions,
-      answers: selectedAnswers,
-    };
-
-    await addSession(session);
-    setShowResults(true);
   };
 
   const calculateScore = () => {

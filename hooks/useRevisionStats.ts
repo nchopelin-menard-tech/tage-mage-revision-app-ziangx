@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RevisionSession, Stats, TageMageSection } from '@/types/tageMage';
 
@@ -23,13 +23,79 @@ export const useRevisionStats = () => {
   });
   const [loading, setLoading] = useState(true);
 
+  const calculateSectionStats = useCallback((section: TageMageSection) => {
+    const sectionSessions = sessions.filter(s => s.section === section);
+    if (sectionSessions.length === 0) {
+      return { sessions: 0, bestScore: 0, averageScore: 0 };
+    }
+
+    const totalScore = sectionSessions.reduce((sum, s) => sum + (s.score / s.totalQuestions) * 100, 0);
+    const averageScore = totalScore / sectionSessions.length;
+    const bestScore = Math.max(...sectionSessions.map(s => (s.score / s.totalQuestions) * 100));
+
+    return {
+      sessions: sectionSessions.length,
+      bestScore,
+      averageScore,
+    };
+  }, [sessions]);
+
+  const calculateModeStats = useCallback((mode: 'exam' | 'training') => {
+    const modeSessions = sessions.filter(s => s.mode === mode);
+    if (modeSessions.length === 0) {
+      return { sessions: 0, bestScore: 0, averageScore: 0 };
+    }
+
+    const totalScore = modeSessions.reduce((sum, s) => sum + (s.score / s.totalQuestions) * 100, 0);
+    const averageScore = totalScore / modeSessions.length;
+    const bestScore = Math.max(...modeSessions.map(s => (s.score / s.totalQuestions) * 100));
+
+    return {
+      sessions: modeSessions.length,
+      bestScore,
+      averageScore,
+    };
+  }, [sessions]);
+
+  const calculateStats = useCallback(() => {
+    if (sessions.length === 0) {
+      return;
+    }
+
+    const totalSessions = sessions.length;
+    const totalScore = sessions.reduce((sum, s) => sum + (s.score / s.totalQuestions) * 100, 0);
+    const averageScore = totalScore / totalSessions;
+    const bestScore = Math.max(...sessions.map(s => (s.score / s.totalQuestions) * 100));
+    const totalTimeSpent = sessions.reduce((sum, s) => sum + s.timeSpent, 0);
+
+    const sectionStats: Stats['sectionStats'] = {
+      comprehension: calculateSectionStats('comprehension'),
+      calcul: calculateSectionStats('calcul'),
+      raisonnement: calculateSectionStats('raisonnement'),
+      logique: calculateSectionStats('logique'),
+    };
+
+    const examStats = calculateModeStats('exam');
+    const trainingStats = calculateModeStats('training');
+
+    setStats({
+      totalSessions,
+      bestScore,
+      averageScore,
+      totalTimeSpent,
+      sectionStats,
+      examStats,
+      trainingStats,
+    });
+  }, [sessions, calculateSectionStats, calculateModeStats]);
+
   useEffect(() => {
     loadSessions();
   }, []);
 
   useEffect(() => {
     calculateStats();
-  }, [sessions]);
+  }, [calculateStats]);
 
   const loadSessions = async () => {
     try {
@@ -60,72 +126,6 @@ export const useRevisionStats = () => {
     const newSessions = [...sessions, session];
     setSessions(newSessions);
     await saveSessions(newSessions);
-  };
-
-  const calculateStats = () => {
-    if (sessions.length === 0) {
-      return;
-    }
-
-    const totalSessions = sessions.length;
-    const totalScore = sessions.reduce((sum, s) => sum + (s.score / s.totalQuestions) * 100, 0);
-    const averageScore = totalScore / totalSessions;
-    const bestScore = Math.max(...sessions.map(s => (s.score / s.totalQuestions) * 100));
-    const totalTimeSpent = sessions.reduce((sum, s) => sum + s.timeSpent, 0);
-
-    const sectionStats: Stats['sectionStats'] = {
-      comprehension: calculateSectionStats('comprehension'),
-      calcul: calculateSectionStats('calcul'),
-      raisonnement: calculateSectionStats('raisonnement'),
-      logique: calculateSectionStats('logique'),
-    };
-
-    const examStats = calculateModeStats('exam');
-    const trainingStats = calculateModeStats('training');
-
-    setStats({
-      totalSessions,
-      bestScore,
-      averageScore,
-      totalTimeSpent,
-      sectionStats,
-      examStats,
-      trainingStats,
-    });
-  };
-
-  const calculateSectionStats = (section: TageMageSection) => {
-    const sectionSessions = sessions.filter(s => s.section === section);
-    if (sectionSessions.length === 0) {
-      return { sessions: 0, bestScore: 0, averageScore: 0 };
-    }
-
-    const totalScore = sectionSessions.reduce((sum, s) => sum + (s.score / s.totalQuestions) * 100, 0);
-    const averageScore = totalScore / sectionSessions.length;
-    const bestScore = Math.max(...sectionSessions.map(s => (s.score / s.totalQuestions) * 100));
-
-    return {
-      sessions: sectionSessions.length,
-      bestScore,
-      averageScore,
-    };
-  };
-
-  const calculateModeStats = (mode: 'exam' | 'training') => {
-    const modeSessions = sessions.filter(s => s.mode === mode);
-    if (modeSessions.length === 0) {
-      return { sessions: 0, bestScore: 0, averageScore: 0 };
-    }
-
-    const totalScore = modeSessions.reduce((sum, s) => sum + (s.score / s.totalQuestions) * 100, 0);
-    const averageScore = totalScore / modeSessions.length;
-    const bestScore = Math.max(...modeSessions.map(s => (s.score / s.totalQuestions) * 100));
-
-    return {
-      sessions: modeSessions.length,
-      bestScore,
-      averageScore,
-    };
   };
 
   return {
